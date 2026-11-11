@@ -1,0 +1,33 @@
+name: HP Radeon 760M HDMI discovery (read-only)
+
+on:
+  push:
+    branches:
+      - feature/hp760m-hdmi-discovery
+    paths:
+      - 'tools/hdmi/**'
+      - 'tests/test_hp_hdmi_probe.py'
+      - '.github/workflows/hp-hdmi-discovery.yml'
+  pull_request:
+    paths:
+      - 'tools/hdmi/**'
+      - 'tests/test_hp_hdmi_probe.py'
+      - '.github/workflows/hp-hdmi-discovery.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  offline-discovery-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test connector status comparison, EDID privacy, and macOS sanitization
+        run: |
+          python3 -m unittest discover -s tests -p test_hp_hdmi_probe.py -v
+          python3 -m py_compile tools/hdmi/hp_hdmi_probe.py
+      - name: Capture read-only Linux runner connector inventory
+        run: |
+          python3 tools/hdmi/hp_hdmi_probe.py --phase unplugged > /tmp/hdmi-probe-selftest.json
+          python3 -m json.tool /tmp/hdmi-probe-selftest.json >/dev/null
